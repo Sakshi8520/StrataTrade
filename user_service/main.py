@@ -56,7 +56,7 @@ def login(user:UserLogin,db:Annotated[Session,Depends(get_db)],response:Response
 	if not db_user:
 		raise HTTPException(status_code=401,detail="Unauthorized access")
 	valid_password=verify_password(user.password,db_user.password_hash)
-	if not verify_password:
+	if not valid_password:
 		raise HTTPException(status_code=401,detail="Unauthorized access")
 	token = create_access_token(db_user.id)
 	response.set_cookie(key="access_token",value=token,httponly=True,secure=settings.COOKIE_SECURE)
@@ -95,7 +95,7 @@ def me(user:Annotated[User,Depends(get_current_user)]):
 	"email":user.email}
 
 @app.post("/logout/users",status_code=200)
-def logout(token:Annotated[str,Depends(cookie_scheme)],response:Response):
+def logout(token:Annotated[str|None,Depends(cookie_scheme)],response:Response):
 	try:
 		if token is not None:
 			revoke_token(token)
